@@ -120,3 +120,34 @@ a { color:inherit; }
   .restaurant-card { gap:9px; padding:9px; }
 }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+
+/* Homepage: the uploaded map is the entire interface. No extra headings or controls. */
+.site:has(#home-view:not([hidden])) { max-width:none; padding:0; width:100%; }
+.site:has(#home-view:not([hidden])) > .site-head,
+.site:has(#home-view:not([hidden])) > .site-foot { display:none; }
+#home-view { width:100%; }
+#home-view .home-art,
+#home-view .home-art.image-ready {
+  width:100%; max-width:none; min-height:0; margin:0;
+  position:relative; line-height:0;
+}
+#home-view .home-art img {
+  width:100%; max-width:none; max-height:none; height:auto;
+  object-fit:fill; display:block; user-select:none;
+}
+#home-view .hotspots {
+  position:absolute; width:100%; height:100%; inset:0;
+  pointer-events:none; overflow:visible; line-height:normal;
+}
+#home-view .county-hit {
+  fill:transparent; stroke:transparent; stroke-width:1;
+  pointer-events:visibleFill; cursor:pointer;
+  outline:none; transition:fill 120ms ease,stroke 120ms ease;
+}
+#home-view .county-hit:hover,
+#home-view .county-hit:focus-visible {
+  fill:rgba(255,255,255,.14);
+  stroke:rgba(255,255,255,.62);
+  stroke-width:2.5;
+}
+#home-view .county-hit:active { fill:rgba(255,255,255,.25); }
