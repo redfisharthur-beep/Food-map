@@ -73,7 +73,10 @@ a { color:inherit; }
 .score-label { display:block; font-size:9px; line-height:13px; letter-spacing:.08em; }
 .feature { font-size:12px; line-height:1.65; color:#71766e; margin:0; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; overflow-wrap:anywhere; }
 .map-link { margin-top:auto; color:#5e5e5e; font-weight:400; font-family:Roboto,Arial,sans-serif; font-size:12px; letter-spacing:normal; white-space:nowrap; text-decoration:underline; padding:3px 0; }
-.map-link:hover { color:#3f5848; }
+.map-link:hover { color:#1f1f1f; }
+.footer-links { display:inline-flex; gap:12px; margin-left:16px; letter-spacing:normal; }
+.footer-links a { color:#7c847b; text-decoration:none; }
+.footer-links a:hover { text-decoration:underline; }
 .skeleton { pointer-events:none; }
 .skeleton .photo-box,.skeleton-line { background:linear-gradient(90deg,#e9e9e2,#f2f2ed,#e9e9e2); background-size:200% 100%; animation:glide 1.4s linear infinite; }
 .skeleton-line { height:13px; border-radius:5px; margin:8px 0; width:75%; }
