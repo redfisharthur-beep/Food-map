@@ -167,7 +167,7 @@ async function setupHomeArt(counties) {
   img.addEventListener("load",showImage);
   img.addEventListener("error",()=>{img.hidden=true;placeholder.hidden=false;holder.hidden=true;img.parentElement.classList.remove("image-ready");});
   if(img.complete&&img.naturalWidth>0)showImage();
-  // Users may place their own Taiwan cover in public/assets/home.webp.
+  // User-created Taiwan homepage map should be placed at public/assets/map.webp.
   // Optional assets/hotspots.json maps county name -> { x:0-100,y:0-100 }.
   try {
     const res=await fetch("/assets/hotspots.json");
