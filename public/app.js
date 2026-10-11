@@ -97,6 +97,8 @@ function restaurantCard(item) {
     img.src="/api/photo?name="+encodeURIComponent(item.photoRef);
     img.addEventListener("error",()=>{img.remove();photo.prepend(fallback);});
     photo.append(img);
+    const photoLink=safeGoogle(item.photoSourceUrl)||safeGoogle(item.mapsUrl);
+    if(photoLink){const open=node("a","photo-open");open.href=photoLink;open.target="_blank";open.rel="noopener noreferrer";open.setAttribute("aria-label","在 Google Maps 查看原始照片");photo.append(open);}
     const credit=(item.attribution||[])[0];
     if(credit?.name) {
       const el=credit.url?node("a","photo-credit",credit.name):node("span","photo-credit",credit.name);
@@ -115,7 +117,8 @@ function restaurantCard(item) {
   info.append(top,desc);
   const maps=safeGoogle(item.mapsUrl);
   if(maps) {
-    const link=node("a","map-link","Google 地圖");
+    const link=node("a","map-link","Google Maps");
+    link.setAttribute("translate","no");
     link.href=maps;
     link.target="_blank";
     link.rel="noopener noreferrer";
