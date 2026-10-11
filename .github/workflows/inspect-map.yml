@@ -20,13 +20,18 @@ jobs:
           from PIL import ImageDraw
           im=im.convert('RGB')
           draw=ImageDraw.Draw(im)
-          for x in range(0,im.width,50):
-            draw.line([(x,0),(x,im.height)],fill=(40,40,40),width=1)
-            for y in range(0,im.height,100):
-              draw.text((x+2,y+2),str(x),fill=(0,0,0),stroke_width=2,stroke_fill=(255,255,255))
-          for y in range(0,im.height,50):
-            draw.line([(0,y),(im.width,y)],fill=(40,40,40),width=1)
-            draw.text((5,y+2),str(y),fill=(0,0,0),stroke_width=2,stroke_fill=(255,255,255))
+          import json
+          data=json.load(open('public/assets/map-areas.json'))
+          colors=[(255,255,255),(0,0,0),(235,10,40),(28,15,160),(22,118,28)]
+          for index,(county,parts) in enumerate(data['areas'].items()):
+            c=colors[index%len(colors)]
+            for part in parts:
+              poly=[tuple(p) for p in part]
+              draw.line(poly+[poly[0]],fill=c,width=3,joint='curve')
+            xx=sum(p[0] for p in parts[0])/len(parts[0])
+            yy=sum(p[1] for p in parts[0])/len(parts[0])
+            draw.text((xx-5,yy-5),str(index+1),fill=(255,255,255),stroke_width=2,stroke_fill=(0,0,0))
+          print('COUNTY_ORDER',list(enumerate(data['areas'],1)),flush=True)
           out=io.BytesIO()
           im.convert('RGB').save(out,format='JPEG',quality=77,optimize=True)
           value=base64.b64encode(out.getvalue()).decode('ascii')
