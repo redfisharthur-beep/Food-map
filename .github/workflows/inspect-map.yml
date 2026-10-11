@@ -17,6 +17,16 @@ jobs:
           im=Image.open('public/assets/map.webp')
           print('ORIGINAL_MAP_DIMENSIONS',im.size,flush=True)
           im.thumbnail((850,1550))
+          from PIL import ImageDraw
+          im=im.convert('RGB')
+          draw=ImageDraw.Draw(im)
+          for x in range(0,im.width,50):
+            draw.line([(x,0),(x,im.height)],fill=(40,40,40),width=1)
+            for y in range(0,im.height,100):
+              draw.text((x+2,y+2),str(x),fill=(0,0,0),stroke_width=2,stroke_fill=(255,255,255))
+          for y in range(0,im.height,50):
+            draw.line([(0,y),(im.width,y)],fill=(40,40,40),width=1)
+            draw.text((5,y+2),str(y),fill=(0,0,0),stroke_width=2,stroke_fill=(255,255,255))
           out=io.BytesIO()
           im.convert('RGB').save(out,format='JPEG',quality=77,optimize=True)
           value=base64.b64encode(out.getvalue()).decode('ascii')
