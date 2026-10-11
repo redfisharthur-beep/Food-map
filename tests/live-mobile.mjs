@@ -14,6 +14,13 @@ try {
     const names=await page.locator('#home-image-hotspots .county-hit').evaluateAll(items=>new Set(items.map(x=>x.dataset.county)).size);
     if(names!==19 || countyCount<19)throw new Error('County SVG regions '+countyCount+' counties '+names);
     if(await page.locator('#home-view .site-head,#home-view #county-list,#home-view .home-intro').count())throw new Error('Homepage includes extra text or buttons');
+    const ui=await page.evaluate(()=>({
+      header:getComputedStyle(document.querySelector('.site-head')).display,
+      footer:getComputedStyle(document.querySelector('.site-foot')).display,
+      map:getComputedStyle(document.querySelector('#home-image')).display
+    }));
+    if(ui.header!=='none'||ui.footer!=='none'||ui.map==='none')
+      throw new Error('Homepage is not image-only: '+JSON.stringify(ui));
     if((await page.locator('#home-image').evaluate(img=>img.naturalWidth))===0)throw new Error('Homepage map image failed to load');
     const before=await page.evaluate(()=>({doc:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}));
     if(before.doc>before.client+1)throw new Error('Homepage horizontal overflow at '+viewport.width+': '+JSON.stringify(before));
@@ -33,6 +40,9 @@ try {
       const state=await img.evaluate(el=>({complete:el.complete,width:el.naturalWidth,height:el.naturalHeight}));
       console.log('PHOTO TEST',JSON.stringify(state),JSON.stringify(images));
       if(!state.width)throw new Error('Live restaurant photo failed: '+JSON.stringify(images));
+      const badText=await page.locator('.restaurant-card').allTextContents();
+      if(badText.some(txt=>/近期獨立(食記|評價)|查看最新顧客評論|有找到獨立心得/.test(txt)))
+        throw new Error('Generic boilerplate feature was displayed');
     }
     const townCount=await page.locator('#town option').count();
     if(townCount<20)throw new Error('Missing towns '+townCount);
