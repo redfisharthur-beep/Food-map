@@ -62,8 +62,9 @@ a { color:inherit; }
 .restaurant-card { display:flex; gap:14px; min-width:0; border:1px solid var(--line); background:var(--paper); border-radius:15px; padding:13px; }
 .photo-box { width:122px; height:122px; flex:0 0 122px; position:relative; border-radius:10px; overflow:hidden; background:#e5e8df; display:flex; align-items:center; justify-content:center; }
 .photo-box img { display:block; width:100%; height:100%; object-fit:cover; }
+.photo-open { position:absolute; inset:0; z-index:1; }
 .photo-fallback { font-size:12px; color:#8c9688; letter-spacing:.12em; text-align:center; }
-.photo-credit { position:absolute; bottom:0; left:0; right:0; font-size:9px; padding:2px 4px; color:#fff; background:#1820189c; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:underline; }
+.photo-credit { z-index:2; position:absolute; bottom:0; left:0; right:0; font-size:9px; padding:2px 4px; color:#fff; background:#1820189c; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:underline; }
 .restaurant-info { display:flex; flex:1; flex-direction:column; align-items:flex-start; min-width:0; gap:5px; }
 .card-top { width:100%; display:flex; align-items:flex-start; gap:9px; justify-content:space-between; }
 .restaurant-name { margin:1px 0; font-size:16px; line-height:1.4; font-weight:600; overflow-wrap:anywhere; }
@@ -71,7 +72,7 @@ a { color:inherit; }
 .score-number { display:block; font-size:22px; line-height:29px; font-weight:700; font-variant-numeric:tabular-nums; }
 .score-label { display:block; font-size:9px; line-height:13px; letter-spacing:.08em; }
 .feature { font-size:12px; line-height:1.65; color:#71766e; margin:0; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; overflow-wrap:anywhere; }
-.map-link { margin-top:auto; color:#66806d; font-weight:600; font-size:12px; text-decoration:none; padding:3px 0; border-bottom:1px solid #b5c4b6; }
+.map-link { margin-top:auto; color:#5e5e5e; font-weight:400; font-family:Roboto,Arial,sans-serif; font-size:12px; letter-spacing:normal; white-space:nowrap; text-decoration:underline; padding:3px 0; }
 .map-link:hover { color:#3f5848; }
 .skeleton { pointer-events:none; }
 .skeleton .photo-box,.skeleton-line { background:linear-gradient(90deg,#e9e9e2,#f2f2ed,#e9e9e2); background-size:200% 100%; animation:glide 1.4s linear infinite; }
