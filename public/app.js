@@ -162,15 +162,17 @@ async function searchRestaurants() {
 }
 async function setupHomeArt(counties) {
   const img=$("home-image"),placeholder=$("art-placeholder");
-  img.addEventListener("load",()=>{img.hidden=false;placeholder.hidden=true;});
-  img.addEventListener("error",()=>{img.hidden=true;placeholder.hidden=false;});
+  const holder=$("home-image-hotspots");
+  const showImage=()=>{img.hidden=false;placeholder.hidden=true;if(holder.children.length)holder.hidden=false;};
+  img.addEventListener("load",showImage);
+  img.addEventListener("error",()=>{img.hidden=true;placeholder.hidden=false;holder.hidden=true;});
+  if(img.complete&&img.naturalWidth>0)showImage();
   // Users may place their own Taiwan cover in public/assets/home.webp.
   // Optional assets/hotspots.json maps county name -> { x:0-100,y:0-100 }.
   try {
     const res=await fetch("/assets/hotspots.json");
     if(!res.ok)return;
     const map=await res.json();
-    const holder=$("home-image-hotspots");
     for(const [county,pos] of Object.entries(map)) {
       if(!counties.some(x=>x.name===county))continue;
       const x=Number(pos.x),y=Number(pos.y);
@@ -181,7 +183,7 @@ async function setupHomeArt(counties) {
       chip.addEventListener("click",()=>showCounty(county));
       holder.append(chip);
     }
-    if(holder.children.length)holder.hidden=false;
+    if(holder.children.length&&!img.hidden)holder.hidden=false;
   }catch{}
 }
 async function init() {
