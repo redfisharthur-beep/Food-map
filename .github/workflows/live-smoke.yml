@@ -37,7 +37,27 @@ jobs:
                     failures.append("missing API secrets")
                 if label=="live restaurant search":
                   info=json.loads(data)
-                  print("Search:",json.dumps({"count":info.get("count"),"names":[x.get("name") for x in info.get("restaurants",[])[:4]],"features":[x.get("feature") for x in info.get("restaurants",[])[:2]]},ensure_ascii=False),flush=True)
+
+                  restaurants=info.get("restaurants",[])
+                  print("Search:",json.dumps({"count":info.get("count"),"names":[x.get("name") for x in restaurants[:4]],"features":[x.get("feature") for x in restaurants[:2]]},ensure_ascii=False),flush=True)
+                  for place in restaurants:
+                    if not (1<=int(place.get("score",0))<=99):failures.append("invalid score")
+                    if len(place.get("feature",""))>50:failures.append("feature too long")
+                    if "google." not in place.get("mapsUrl",""):failures.append("missing Google Maps URL")
+                  photo=next((p.get("photoRef") for p in restaurants if p.get("photoRef")),None)
+                  if photo:
+                    photo_url=base+"/api/photo?"+urllib.parse.urlencode({"name":photo})
+                    try:
+                      with urllib.request.urlopen(photo_url,timeout=30) as img:
+                        image_type=img.headers.get("Content-Type","")
+                        image_data=img.read()
+                        print("Restaurant photo:",img.status,image_type,len(image_data),"bytes",flush=True)
+                        if not image_type.startswith("image/") or not image_data:failures.append("photo format incorrect")
+                    except Exception as exc:
+                      failures.append("restaurant photo: "+str(exc))
+                      print("Restaurant photo: FAILED",str(exc),flush=True)
+                  else:
+                    print("Restaurant photo: no images returned by Places",flush=True)
                 if label=="homepage" and (b"food-map" not in data.lower() and "食光地圖".encode() not in data):
                   failures.append("unexpected homepage response")
             except Exception as exc:
