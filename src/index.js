@@ -37,7 +37,8 @@ function asPlace(p) {
     id:p.id, name:p.displayName.text, address:p.formattedAddress||"",
     mapsUrl:p.googleMapsUri||"https://www.google.com/maps/search/?api=1&query_place_id="+encodeURIComponent(p.id),
     photoRef:photo?.name||"",
-    attribution:(photo?.authorAttributions||[]).map(a=>({name:trim(a.displayName,50),url:/^https?:\/\//.test(a.uri||"")?a.uri:""})).filter(a=>a.name).slice(0,2),
+    photoSourceUrl:photo?.googleMapsUri||"",
+    attribution:(photo?.authorAttributions||[]).map(a=>({name:trim(a.displayName,50),url:/^https?:\/\//.test(a.uri||"")?a.uri:/^\/\//.test(a.uri||"")?"https:"+a.uri:""})).filter(a=>a.name).slice(0,2),
     rating:Number(p.rating)||0, reviewCount:Number(p.userRatingCount)||0,
     priceBand:band(p), score:basicScore(p), verifiedSources:0,
     feature:"近期獨立評價資料不足，建議先查看最新顧客評論。"
@@ -124,7 +125,7 @@ async function search(request,env) {
     places=data.places||[];
   }catch{return send({error:"餐廳搜尋暫時無法連線"},502);}
   const restaurants=places
-    .filter(p=>p.id&&p.displayName?.text&&p.businessStatus!=="CLOSED_PERMANENTLY")
+    .filter(p=>p.id&&p.displayName?.text&&!["CLOSED_PERMANENTLY","CLOSED_TEMPORARILY"].includes(p.businessStatus))
     .filter(isFood)
     .filter(p=>normal(p.formattedAddress).includes(normal(county)))
     .filter(p=>town==="全區"||normal(p.formattedAddress).includes(normal(town)))
@@ -139,9 +140,14 @@ async function photo(request,env) {
   const name=new URL(request.url).searchParams.get("name")||"";
   if(!/^places\/[a-zA-Z0-9_-]+\/photos\/[a-zA-Z0-9_-]+$/.test(name))return new Response("",{status:400});
   try {
-    const res=await fetch("https://places.googleapis.com/v1/"+name+"/media?maxWidthPx=420",{
-      headers:{"X-Goog-Api-Key":env.GOOGLE_PLACES_API_KEY},redirect:"follow"
+    const metadata=await fetch("https://places.googleapis.com/v1/"+name+"/media?maxWidthPx=420&skipHttpRedirect=true",{
+      headers:{"X-Goog-Api-Key":env.GOOGLE_PLACES_API_KEY}
     });
+    if(!metadata.ok)return new Response("",{status:404});
+    const details=await metadata.json(),photoUrl=new URL(details.photoUri);
+    if(photoUrl.protocol!=="https:" || !["googleusercontent.com","ggpht.com"].some(host=>photoUrl.hostname===host||photoUrl.hostname.endsWith("."+host)))
+      return new Response("",{status:404});
+    const res=await fetch(photoUrl.href);
     if(!res.ok||!res.headers.get("content-type")?.startsWith("image/"))return new Response("",{status:404});
     return new Response(res.body,{headers:{"Content-Type":res.headers.get("Content-Type")||"image/jpeg","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}});
   }catch{return new Response("",{status:502});}
