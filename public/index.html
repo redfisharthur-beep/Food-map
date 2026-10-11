@@ -18,24 +18,14 @@
       <button class="brand" id="brand" type="button" aria-label="返回縣市首頁">
         <span class="brand-mark"></span><span>食光地圖</span>
       </button>
-      <span class="brand-subtitle">好好吃飯，簡單選店</span>
+      
     </header>
 
     <section id="home-view" class="view">
-      <div class="home-intro">
-        <p class="eyebrow">TAIWAN FOOD GUIDE</p>
-        <h1>每一座城，<br>都有值得吃的一餐。</h1>
-        <p class="home-hint">選擇縣市，尋找好味道</p>
-      </div>
       <div class="home-art">
-        <img id="home-image" src="/assets/map.webp" alt="台灣美食縣市選擇地圖" hidden>
-        <div id="home-image-hotspots" class="hotspots" hidden></div>
-        <div id="art-placeholder" class="art-placeholder" aria-hidden="true">
-          <div class="art-orbit"></div><span>食<br>光<br>台<br>灣</span>
-        </div>
+        <img id="home-image" src="/assets/map.webp" alt="台灣縣市美食地圖" draggable="false">
+        <svg id="home-image-hotspots" class="hotspots" xmlns="http://www.w3.org/2000/svg" aria-label="選擇台灣縣市" role="group"></svg>
       </div>
-      <div class="section-heading"><h2>選擇縣市</h2><span>22 個縣市</span></div>
-      <div id="county-list" class="county-grid" aria-label="台灣縣市"></div>
     </section>
 
     <section id="results-view" class="view" hidden>
