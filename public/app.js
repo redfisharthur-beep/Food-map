@@ -113,8 +113,11 @@ function restaurantCard(item) {
   score.setAttribute("aria-label","推薦評分 "+item.score+" 分");
   score.append(node("span","score-number",String(item.score)),node("span","score-label","推薦分"));
   top.append(title,score);
-  const desc=node("p","feature",Array.from(item.feature||"").slice(0,50).join(""));
-  info.append(top,desc);
+  info.append(top);
+  const summary=Array.from(item.feature||"").slice(0,50).join("").trim();
+  if(summary && !/(近期獨立|查看最新顧客評論|搭配最新評論|資料不足)/.test(summary)) {
+    info.append(node("p","feature",summary));
+  }
   const maps=safeGoogle(item.mapsUrl);
   if(maps) {
     const link=node("a","map-link","Google Maps");
@@ -161,30 +164,38 @@ async function searchRestaurants() {
   }
 }
 async function setupHomeArt(counties) {
-  const img=$("home-image"),placeholder=$("art-placeholder");
-  const holder=$("home-image-hotspots");
-  const showImage=()=>{img.hidden=false;placeholder.hidden=true;img.parentElement.classList.add("image-ready");if(holder.children.length)holder.hidden=false;};
-  img.addEventListener("load",showImage);
-  img.addEventListener("error",()=>{img.hidden=true;placeholder.hidden=false;holder.hidden=true;img.parentElement.classList.remove("image-ready");});
-  if(img.complete&&img.naturalWidth>0)showImage();
-  // User-created Taiwan homepage map should be placed at public/assets/map.webp.
-  // Optional assets/hotspots.json maps county name -> { x:0-100,y:0-100 }.
-  try {
-    const res=await fetch("/assets/hotspots.json");
-    if(!res.ok)return;
-    const map=await res.json();
-    for(const [county,pos] of Object.entries(map)) {
-      if(!counties.some(x=>x.name===county))continue;
-      const x=Number(pos.x),y=Number(pos.y);
-      if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>100||y<0||y>100)continue;
-      const chip=node("button","hotspot",county);
-      chip.type="button";
-      chip.style.left=x+"%"; chip.style.top=y+"%";
-      chip.addEventListener("click",()=>showCounty(county));
-      holder.append(chip);
+  const img=$("home-image");
+  const svg=$("home-image-hotspots");
+  const available=new Set(counties.map(x=>x.name));
+  const svgNS="http://www.w3.org/2000/svg";
+  const response=await fetch("/assets/map-areas.json");
+  if(!response.ok)throw new Error("Map polygons not found");
+  const data=await response.json();
+  svg.setAttribute("viewBox",data.viewBox.join(" "));
+  svg.setAttribute("preserveAspectRatio","none");
+  for(const [county,polygons] of Object.entries(data.areas)) {
+    if(!available.has(county))continue;
+    for(const polygon of polygons) {
+      if(!Array.isArray(polygon)||polygon.length<3)continue;
+      const hit=document.createElementNS(svgNS,"polygon");
+      hit.setAttribute("points",polygon.map(point=>point.join(",")).join(" "));
+      hit.setAttribute("class","county-hit");
+      hit.setAttribute("role","button");
+      hit.setAttribute("tabindex","0");
+      hit.setAttribute("aria-label",county);
+      hit.setAttribute("data-county",county);
+      const title=document.createElementNS(svgNS,"title");
+      title.textContent=county;
+      hit.append(title);
+      const choose=()=>showCounty(county);
+      hit.addEventListener("click",choose);
+      hit.addEventListener("keydown",event=>{
+        if(event.key==="Enter"||event.key===" "){event.preventDefault();choose();}
+      });
+      svg.append(hit);
     }
-    if(holder.children.length&&!img.hidden)holder.hidden=false;
-  }catch{}
+  }
+  img.addEventListener("dragstart",event=>event.preventDefault());
 }
 async function init() {
   $("brand").addEventListener("click",showHome);
@@ -195,20 +206,13 @@ async function init() {
     if(!response.ok)throw new Error("County list missing");
     const data=await response.json();
     state.counties=ORDER.map(name=>data.find(row=>row.name===name)).filter(Boolean);
-    const grid=$("county-list");
-    grid.replaceChildren(...state.counties.map(row=>{
-      const el=node("button","county-button",row.name);
-      el.type="button";
-      el.addEventListener("click",()=>showCounty(row.name));
-      return el;
-    }));
     await setupHomeArt(state.counties);
     try {
       const selected=decodeURIComponent(location.hash.slice(1));
       if(state.counties.some(x=>x.name===selected))showCounty(selected);
     }catch{}
   } catch {
-    $("county-list").textContent="縣市資料暫時無法載入";
+    $("home-image-hotspots").setAttribute("aria-label","縣市點擊區域暫時無法載入");
   }
 }
 init();
