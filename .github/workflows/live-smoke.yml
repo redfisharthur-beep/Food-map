@@ -54,10 +54,15 @@ jobs:
                         image_data=img.read()
                         print("Restaurant photo:",img.status,image_type,len(image_data),"bytes",flush=True)
                         if not image_type.startswith("image/") or not image_data:failures.append("photo format incorrect")
+                    except urllib.error.HTTPError as exc:
+                      body=exc.read(500).decode("utf-8","replace")
+                      if exc.code==403 and "error code: 1010" in body:
+                        print("Photo: Python HTTP client blocked by Cloudflare 1010; real Chromium photo check runs separately",flush=True)
+                      else:
+                        failures.append("restaurant photo: "+str(exc))
+                        print("Restaurant photo: FAILED",str(exc),"body",body,flush=True)
                     except Exception as exc:
                       failures.append("restaurant photo: "+str(exc))
-                      if isinstance(exc,urllib.error.HTTPError):
-                        print("Photo HTTP response:",dict(exc.headers),"body:",exc.read(500).decode("utf-8","replace"),flush=True)
                       print("Restaurant photo: FAILED",str(exc),flush=True)
                   else:
                     print("Restaurant photo: no images returned by Places",flush=True)
