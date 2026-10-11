@@ -45,7 +45,7 @@ wrangler.jsonc 已設定 AI binding 為 AI。需有可用 Workers AI 用量才�
 
 上傳自己的首頁圖片到：
 
-    public/assets/home.webp
+    public/assets/map.webp
 
 圖片自動等比例顯示，沒有圖片就顯示莫蘭迪備用首頁。可自製圖示也放同一目錄。
 
