@@ -46,6 +46,7 @@ jobs:
                     if "google." not in place.get("mapsUrl",""):failures.append("missing Google Maps URL")
                   photo=next((p.get("photoRef") for p in restaurants if p.get("photoRef")),None)
                   if photo:
+                    print("Photo reference diagnostics: length",len(photo),"prefix",photo[:35],flush=True)
                     photo_url=base+"/api/photo?"+urllib.parse.urlencode({"name":photo})
                     try:
                       with urllib.request.urlopen(photo_url,timeout=30) as img:
@@ -55,6 +56,8 @@ jobs:
                         if not image_type.startswith("image/") or not image_data:failures.append("photo format incorrect")
                     except Exception as exc:
                       failures.append("restaurant photo: "+str(exc))
+                      if isinstance(exc,urllib.error.HTTPError):
+                        print("Photo HTTP response:",dict(exc.headers),"body:",exc.read(500).decode("utf-8","replace"),flush=True)
                       print("Restaurant photo: FAILED",str(exc),flush=True)
                   else:
                     print("Restaurant photo: no images returned by Places",flush=True)
