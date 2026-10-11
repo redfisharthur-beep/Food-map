@@ -163,9 +163,9 @@ async function searchRestaurants() {
 async function setupHomeArt(counties) {
   const img=$("home-image"),placeholder=$("art-placeholder");
   const holder=$("home-image-hotspots");
-  const showImage=()=>{img.hidden=false;placeholder.hidden=true;if(holder.children.length)holder.hidden=false;};
+  const showImage=()=>{img.hidden=false;placeholder.hidden=true;img.parentElement.classList.add("image-ready");if(holder.children.length)holder.hidden=false;};
   img.addEventListener("load",showImage);
-  img.addEventListener("error",()=>{img.hidden=true;placeholder.hidden=false;holder.hidden=true;});
+  img.addEventListener("error",()=>{img.hidden=true;placeholder.hidden=false;holder.hidden=true;img.parentElement.classList.remove("image-ready");});
   if(img.complete&&img.naturalWidth>0)showImage();
   // Users may place their own Taiwan cover in public/assets/home.webp.
   // Optional assets/hotspots.json maps county name -> { x:0-100,y:0-100 }.
