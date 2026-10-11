@@ -21,7 +21,10 @@ try {
     }));
     if(ui.header!=='none'||ui.footer!=='none'||ui.map==='none')
       throw new Error('Homepage is not image-only: '+JSON.stringify(ui));
-    if((await page.locator('#home-image').evaluate(img=>img.naturalWidth))===0)throw new Error('Homepage map image failed to load');
+    await page.waitForFunction(()=>document.querySelector('#home-image')?.naturalWidth>0,null,{timeout:20000}).catch(async()=>{
+      const info=await page.locator('#home-image').evaluate(img=>({src:img.currentSrc,complete:img.complete,width:img.naturalWidth}));
+      throw new Error('Homepage map image failed to load: '+JSON.stringify(info));
+    });
     const before=await page.evaluate(()=>({doc:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}));
     if(before.doc>before.client+1)throw new Error('Homepage horizontal overflow at '+viewport.width+': '+JSON.stringify(before));
     await page.locator('.county-hit[data-county="彰化縣"]').click();
