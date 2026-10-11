@@ -9,12 +9,15 @@ try {
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await page.goto(origin,{waitUntil:'domcontentloaded',timeout:30000});
-    await page.locator('#county-list .county-button').first().waitFor();
-    const countyCount=await page.locator('#county-list .county-button').count();
-    if(countyCount!==22)throw new Error('County count '+countyCount);
+    await page.locator('#home-image-hotspots .county-hit').first().waitFor();
+    const countyCount=await page.locator('#home-image-hotspots .county-hit').count();
+    const names=await page.locator('#home-image-hotspots .county-hit').evaluateAll(items=>new Set(items.map(x=>x.dataset.county)).size);
+    if(names!==19 || countyCount<19)throw new Error('County SVG regions '+countyCount+' counties '+names);
+    if(await page.locator('#home-view .site-head,#home-view #county-list,#home-view .home-intro').count())throw new Error('Homepage includes extra text or buttons');
+    if((await page.locator('#home-image').evaluate(img=>img.naturalWidth))===0)throw new Error('Homepage map image failed to load');
     const before=await page.evaluate(()=>({doc:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}));
     if(before.doc>before.client+1)throw new Error('Homepage horizontal overflow at '+viewport.width+': '+JSON.stringify(before));
-    await page.getByRole('button',{name:'彰化縣'}).click();
+    await page.locator('.county-hit[data-county="彰化縣"]').click();
     await page.locator('#results-view').waitFor({state:'visible'});
     if(viewport.width===360) {
       const images=[];
