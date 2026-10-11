@@ -1,0 +1,48 @@
+name: Live website smoke check
+on:
+  push:
+    paths:
+      - ".github/workflows/live-smoke.yml"
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Verify Cloudflare deployment and APIs
+        env:
+          BASE: https://food-map.redfisharthur.workers.dev
+        run: |
+          python3 - <<'PY'
+          import os, json, urllib.request, urllib.error, urllib.parse, sys
+          base=os.environ["BASE"]
+          urls=[
+            ("homepage", base+"/"),
+            ("frontend JS", base+"/app.js"),
+            ("county list", base+"/data/taiwan-districts.json"),
+            ("API health", base+"/api/health"),
+            ("live restaurant search", base+"/api/search?"+urllib.parse.urlencode({"county":"彰化縣","town":"溪湖鎮","price":"all","meal":"不限","cuisine":"不限"}))
+          ]
+          failures=[]
+          for label, url in urls:
+            req=urllib.request.Request(url,headers={"User-Agent":"FoodMapSmoke/1.0"})
+            try:
+              with urllib.request.urlopen(req,timeout=35) as resp:
+                data=resp.read()
+                print(f"{label}: HTTP {resp.status}; {len(data)} bytes",flush=True)
+                if label=="API health":
+                  info=json.loads(data)
+                  print("API bindings:",json.dumps(info,ensure_ascii=False),flush=True)
+                  if not info.get("google") or not info.get("langsearch"):
+                    failures.append("missing API secrets")
+                if label=="live restaurant search":
+                  info=json.loads(data)
+                  print("Search:",json.dumps({"count":info.get("count"),"names":[x.get("name") for x in info.get("restaurants",[])[:4]],"features":[x.get("feature") for x in info.get("restaurants",[])[:2]]},ensure_ascii=False),flush=True)
+                if label=="homepage" and (b"food-map" not in data.lower() and "食光地圖".encode() not in data):
+                  failures.append("unexpected homepage response")
+            except Exception as exc:
+              failures.append(label+": "+str(exc))
+              print(f"{label}: FAILED: {exc}",flush=True)
+          print("FINAL:", "PASS" if not failures else "FAILED "+str(failures),flush=True)
+          if failures: sys.exit(1)
+          PY
