@@ -1,0 +1,117 @@
+:root {
+  --bg:#f6f3ed; --paper:#fffefa; --ink:#434943; --muted:#8d9188;
+  --sage:#879c89; --sage-dark:#586e5d; --sage-light:#e8eee7;
+  --clay:#ae8f80; --line:#e5e3db; --wash:#f1eee8;
+  font-family:"Noto Sans TC","Source Han Sans TC",sans-serif;
+  font-synthesis:none; -webkit-text-size-adjust:100%;
+}
+* { box-sizing:border-box; }
+html { min-height:100%; background:var(--bg); }
+body { margin:0; color:var(--ink); background:var(--bg); font-size:14px; line-height:1.65; }
+button,select { font:inherit; color:inherit; }
+button { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+button:focus-visible, select:focus-visible, a:focus-visible { outline:3px solid #6e8874; outline-offset:3px; }
+button:disabled { cursor:default; }
+a { color:inherit; }
+[hidden] { display:none !important; }
+.site { max-width:1040px; margin:0 auto; padding:0 30px; min-height:100svh; }
+.site-head { min-height:86px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); }
+.brand { display:inline-flex; align-items:center; gap:11px; font-weight:700; letter-spacing:.13em; font-size:22px; background:none; border:0; padding:0; }
+.brand-mark { width:22px; height:22px; display:inline-block; border-radius:100% 42% 100% 42%; background:var(--sage); transform:rotate(-30deg); }
+.brand-subtitle { font-size:12px; letter-spacing:.13em; color:var(--muted); }
+.home-intro { padding:48px 0 22px; text-align:center; }
+.eyebrow { margin:0 0 11px; letter-spacing:.22em; font-size:11px; color:var(--sage-dark); font-weight:600; }
+.home-intro h1 { font-size:clamp(27px,4.7vw,43px); letter-spacing:.10em; line-height:1.5; font-weight:600; margin:0; }
+.home-hint { color:var(--muted); margin:13px 0 0; font-size:13px; letter-spacing:.08em; }
+.home-art { position:relative; margin:18px auto 32px; max-width:700px; min-height:210px; }
+.home-art img { display:block; max-height:640px; width:100%; object-fit:contain; }
+.art-placeholder { height:310px; border-radius:24px; background:#e2e7df; display:grid; place-items:center; position:relative; overflow:hidden; }
+.art-placeholder::before { content:""; position:absolute; width:420px; height:420px; border:2px solid rgba(255,255,255,.55); border-radius:50%; transform:translate(15%,-4%); }
+.art-placeholder::after { content:""; position:absolute; width:260px; height:260px; background:#c4cfc2; border-radius:46% 54% 43% 57%; right:9%; bottom:-150px; transform:rotate(-28deg); }
+.art-placeholder span { color:#586f5e; font-size:31px; letter-spacing:.2em; line-height:1.45; font-weight:600; position:relative; z-index:1; }
+.art-orbit { position:absolute; width:94px; height:94px; background:#d5c7bb; border-radius:50%; left:20%; top:17%; }
+.hotspots { position:absolute; inset:0; pointer-events:none; }
+.hotspot { position:absolute; pointer-events:auto; transform:translate(-50%,-50%); border:0; background:rgba(255,253,249,.91); border-radius:100px; padding:3px 7px; font-size:11px; font-weight:600; box-shadow:0 1px 9px #364c3a22; white-space:nowrap; }
+.hotspot:hover,.hotspot:focus-visible { background:#597662; color:white; }
+.section-heading { display:flex; justify-content:space-between; align-items:baseline; gap:14px; margin-bottom:16px; }
+.section-heading h2 { font-size:18px; letter-spacing:.08em; font-weight:600; margin:0; }
+.section-heading span { color:var(--muted); font-size:12px; }
+.county-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; margin-bottom:60px; }
+.county-button { border:1px solid var(--line); background:var(--paper); border-radius:11px; padding:13px 5px; font-weight:500; letter-spacing:.04em; transition:background .15s,border-color .15s; }
+.county-button:hover { background:var(--sage-light); border-color:#becdbd; }
+.site-foot { text-align:center; border-top:1px solid var(--line); padding:24px 0 29px; font-size:10px; color:#9a9f93; letter-spacing:.16em; }
+.results-title { padding:23px 0 19px; }
+.text-button { background:transparent; border:0; padding:2px 0; font-size:12px; color:var(--sage-dark); letter-spacing:.08em; }
+.results-title h1 { font-size:29px; line-height:1.3; font-weight:600; margin:10px 0 0; letter-spacing:.10em; }
+.filter-panel { border-radius:20px; border:1px solid var(--line); background:var(--paper); padding:22px 24px; }
+.filter-row { display:flex; gap:24px; align-items:flex-start; border-bottom:1px solid var(--line); padding-bottom:18px; }
+.filter-row .town-group { flex:0 0 170px; min-width:0; }
+.filter-row .price-group { flex:1; min-width:0; }
+.filter-label,label[for="town"] { display:block; color:#747c73; font-size:12px; font-weight:600; margin-bottom:9px; letter-spacing:.05em; }
+.town-group select { display:block; width:100%; min-width:0; border:1px solid #dbe1d9; border-radius:9px; background:var(--wash); appearance:none; padding:8px 12px; min-height:38px; outline-offset:1px; }
+.choice-set { display:flex; flex-wrap:wrap; gap:8px; }
+.choice-set button { border:1px solid #e2e5dd; background:#f7f7f2; padding:7px 15px; border-radius:9px; min-height:36px; color:#5a6359; font-size:13px; white-space:nowrap; }
+.choice-set button.active { border-color:var(--sage-dark); background:var(--sage-dark); color:#fff; font-weight:500; }
+.choice-set button:not(.active):hover { background:#eaf0e8; }
+.choice-set.compact button { padding:7px 11px; }
+.filter-stack { padding-top:17px; }
+.results-heading { margin:28px 0 16px; }
+#status { color:var(--muted); font-size:13px; }
+#status:not(:empty) { padding:12px 0; }
+.restaurant-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; padding-bottom:46px; }
+.restaurant-card { display:flex; gap:14px; min-width:0; border:1px solid var(--line); background:var(--paper); border-radius:15px; padding:13px; }
+.photo-box { width:122px; height:122px; flex:0 0 122px; position:relative; border-radius:10px; overflow:hidden; background:#e5e8df; display:flex; align-items:center; justify-content:center; }
+.photo-box img { display:block; width:100%; height:100%; object-fit:cover; }
+.photo-fallback { font-size:12px; color:#8c9688; letter-spacing:.12em; text-align:center; }
+.photo-credit { position:absolute; bottom:0; left:0; right:0; font-size:9px; padding:2px 4px; color:#fff; background:#1820189c; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:underline; }
+.restaurant-info { display:flex; flex:1; flex-direction:column; align-items:flex-start; min-width:0; gap:5px; }
+.card-top { width:100%; display:flex; align-items:flex-start; gap:9px; justify-content:space-between; }
+.restaurant-name { margin:1px 0; font-size:16px; line-height:1.4; font-weight:600; overflow-wrap:anywhere; }
+.score-box { flex:0 0 auto; min-width:46px; height:48px; padding:2px 5px; text-align:center; background:#e3ebe2; border-radius:9px; color:#536c5b; }
+.score-number { display:block; font-size:22px; line-height:29px; font-weight:700; font-variant-numeric:tabular-nums; }
+.score-label { display:block; font-size:9px; line-height:13px; letter-spacing:.08em; }
+.feature { font-size:12px; line-height:1.65; color:#71766e; margin:0; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; overflow-wrap:anywhere; }
+.map-link { margin-top:auto; color:#66806d; font-weight:600; font-size:12px; text-decoration:none; padding:3px 0; border-bottom:1px solid #b5c4b6; }
+.map-link:hover { color:#3f5848; }
+.skeleton { pointer-events:none; }
+.skeleton .photo-box,.skeleton-line { background:linear-gradient(90deg,#e9e9e2,#f2f2ed,#e9e9e2); background-size:200% 100%; animation:glide 1.4s linear infinite; }
+.skeleton-line { height:13px; border-radius:5px; margin:8px 0; width:75%; }
+.skeleton-line.short { width:45%; }
+@keyframes glide { to { background-position-x:-200%; } }
+@media(max-width:760px) {
+  .site { padding:0 15px; }
+  .site-head { min-height:64px; }
+  .brand { font-size:19px; }
+  .brand-subtitle { font-size:10px; }
+  .home-intro { padding:31px 0 16px; }
+  .home-art { margin:10px auto 24px; min-height:180px; }
+  .art-placeholder { height:250px; border-radius:16px; }
+  .county-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+  .county-button { padding:11px 2px; border-radius:9px; font-size:13px; }
+  .filter-panel { padding:17px 13px; border-radius:14px; }
+  .filter-row { flex-direction:column; gap:17px; }
+  .filter-row .town-group,.filter-row .price-group { flex:none; width:100%; }
+  .choice-set { gap:7px; }
+  .choice-set button { font-size:12px; padding:6px 12px; min-height:33px; }
+  .choice-set.compact button { padding:6px 11px; }
+  .results-title { padding:17px 0; }
+  .results-title h1 { font-size:26px; }
+  .results-heading { margin:23px 0 13px; }
+  .restaurant-list { grid-template-columns:1fr; gap:11px; }
+  .restaurant-card { padding:11px; gap:11px; min-height:134px; }
+  .photo-box { width:108px; height:108px; flex-basis:108px; }
+  .restaurant-name { font-size:15px; }
+  .score-box { min-width:42px; height:45px; }
+  .score-number { font-size:20px; line-height:26px; }
+  .feature { font-size:12px; -webkit-line-clamp:2; }
+}
+@media(max-width:380px) {
+  .site { padding:0 11px; }
+  .brand-subtitle { display:none; }
+  .county-grid { gap:6px; }
+  .county-button { font-size:12px; }
+  .choice-set button { padding:5px 9px; }
+  .photo-box { width:99px; height:105px; flex-basis:99px; }
+  .restaurant-card { gap:9px; padding:9px; }
+}
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
