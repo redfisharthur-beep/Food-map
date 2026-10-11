@@ -1,0 +1,209 @@
+const $ = (id) => document.getElementById(id);
+const MEALS = ["不限","早餐","午餐","晚餐","消夜","點心"];
+const CUISINES = ["不限","中式","西式","日式","韓式","泰式","義式","燒烤","排餐","火鍋","小吃","素食","海鮮","咖啡","甜點"];
+const ORDER = ["台北市","新北市","基隆市","桃園市","新竹市","新竹縣","苗栗縣","台中市","彰化縣","南投縣","雲林縣","嘉義市","嘉義縣","台南市","高雄市","屏東縣","宜蘭縣","花蓮縣","台東縣","澎湖縣","金門縣","連江縣"];
+const state = { county:"",town:"全區",price:"all",meal:"不限",cuisine:"不限",counties:[],timer:null,controller:null,lastKey:"" };
+
+function node(tag,cls,txt) {
+  const el=document.createElement(tag);
+  if(cls)el.className=cls;
+  if(txt!==undefined)el.textContent=txt;
+  return el;
+}
+function button(text,value,active,onClick) {
+  const el=node("button",active?"active":"",text);
+  el.type="button";
+  el.dataset.value=value;
+  el.setAttribute("aria-pressed",String(active));
+  el.addEventListener("click",onClick);
+  return el;
+}
+function choices(target,values,selected,callback) {
+  const group=$(target);
+  group.replaceChildren(...values.map(value=>button(value,value,value===selected,()=>callback(value))));
+}
+function cleanState() {
+  if(state.controller)state.controller.abort();
+  if(state.timer)clearTimeout(state.timer);
+  state.controller=null;
+  state.timer=null;
+  state.lastKey="";
+}
+function showHome() {
+  cleanState();
+  state.county="";
+  $("home-view").hidden=false;
+  $("results-view").hidden=true;
+  history.replaceState(null,"",location.pathname);
+  window.scrollTo({top:0,behavior:"instant"});
+}
+function showCounty(county) {
+  if(!state.counties.some(x=>x.name===county))return;
+  cleanState();
+  state.county=county;
+  state.town="全區"; state.price="all"; state.meal="不限"; state.cuisine="不限";
+  $("home-view").hidden=true;
+  $("results-view").hidden=false;
+  $("county-title").textContent=county;
+  const towns=state.counties.find(x=>x.name===county)?.towns||[];
+  const select=$("town");
+  select.replaceChildren(...["全區",...towns].map(t=>{
+    const option=node("option","",t);
+    option.value=t;
+    return option;
+  }));
+  choices("prices",[["all","不限"],["low","200 以內"],["mid","200–400"],["high","400 以上"]].map(x=>x[1]),"不限",label=>{
+    const key={"不限":"all","200 以內":"low","200–400":"mid","400 以上":"high"}[label];
+    state.price=key; renderFilters(); scheduleSearch();
+  });
+  renderFilters();
+  history.replaceState(null,"","#"+encodeURIComponent(county));
+  window.scrollTo({top:0,behavior:"instant"});
+  scheduleSearch(80);
+}
+function renderFilters() {
+  const prices=[["all","不限"],["low","200 以內"],["mid","200–400"],["high","400 以上"]];
+  const group=$("prices");
+  group.replaceChildren(...prices.map(([val,label])=>button(label,val,state.price===val,()=>{
+    state.price=val;renderFilters();scheduleSearch();
+  })));
+  choices("meals",MEALS,state.meal,val=>{state.meal=val;renderFilters();scheduleSearch();});
+  choices("cuisines",CUISINES,state.cuisine,val=>{state.cuisine=val;renderFilters();scheduleSearch();});
+}
+function skeleton() {
+  const card=node("div","restaurant-card skeleton");
+  const photo=node("div","photo-box");
+  const body=node("div","restaurant-info");
+  body.append(node("div","skeleton-line"),node("div","skeleton-line short"),node("div","skeleton-line"));
+  card.append(photo,body);
+  return card;
+}
+function safeGoogle(url) {
+  try {
+    const value=new URL(url);
+    return value.protocol==="https:"&&
+      (value.hostname==="google.com"||value.hostname.endsWith(".google.com")||value.hostname==="maps.app.goo.gl") ? value.href : "";
+  } catch { return ""; }
+}
+function restaurantCard(item) {
+  const card=node("article","restaurant-card");
+  const photo=node("div","photo-box");
+  const fallback=node("span","photo-fallback","餐廳照片");
+  if(item.photoRef) {
+    const img=node("img");
+    img.alt=item.name+" 餐廳照片";
+    img.loading="lazy";
+    img.decoding="async";
+    img.src="/api/photo?name="+encodeURIComponent(item.photoRef);
+    img.addEventListener("error",()=>{img.remove();photo.prepend(fallback);});
+    photo.append(img);
+    const credit=(item.attribution||[])[0];
+    if(credit?.name) {
+      const el=credit.url?node("a","photo-credit",credit.name):node("span","photo-credit",credit.name);
+      if(credit.url){el.href=credit.url;el.target="_blank";el.rel="noopener noreferrer";}
+      photo.append(el);
+    }
+  } else photo.append(fallback);
+  const info=node("div","restaurant-info");
+  const top=node("div","card-top");
+  const title=node("h3","restaurant-name",item.name);
+  const score=node("div","score-box");
+  score.setAttribute("aria-label","推薦評分 "+item.score+" 分");
+  score.append(node("span","score-number",String(item.score)),node("span","score-label","推薦分"));
+  top.append(title,score);
+  const desc=node("p","feature",Array.from(item.feature||"").slice(0,50).join(""));
+  info.append(top,desc);
+  const maps=safeGoogle(item.mapsUrl);
+  if(maps) {
+    const link=node("a","map-link","Google 地圖");
+    link.href=maps;
+    link.target="_blank";
+    link.rel="noopener noreferrer";
+    info.append(link);
+  }
+  card.append(photo,info);
+  return card;
+}
+function scheduleSearch(delay=530) {
+  if(state.timer)clearTimeout(state.timer);
+  if(state.controller)state.controller.abort();
+  state.timer=setTimeout(searchRestaurants,delay);
+}
+async function searchRestaurants() {
+  const params=new URLSearchParams({county:state.county,town:state.town,price:state.price,meal:state.meal,cuisine:state.cuisine});
+  const key=params.toString();
+  if(!state.county||state.lastKey===key)return;
+  state.lastKey=key;
+  const controller=new AbortController();
+  state.controller=controller;
+  $("result-count").textContent="";
+  $("status").textContent="正在尋找好店";
+  $("restaurant-list").replaceChildren(skeleton(),skeleton(),skeleton(),skeleton());
+  try {
+    const response=await fetch("/api/search?"+key,{signal:controller.signal,cache:"no-store"});
+    const body=await response.json();
+    if(!response.ok)throw new Error(body.error||"暫時無法取得餐廳");
+    if(controller.signal.aborted)return;
+    const list=body.restaurants||[];
+    $("result-count").textContent=list.length+" 間";
+    $("restaurant-list").replaceChildren(...list.map(restaurantCard));
+    $("status").textContent=list.length?"":"目前沒有符合條件的餐廳";
+  } catch(error) {
+    if(controller.signal.aborted)return;
+    state.lastKey="";
+    $("restaurant-list").replaceChildren();
+    $("status").textContent=error.message||"搜尋暫時無法使用";
+  } finally {
+    if(state.controller===controller)state.controller=null;
+  }
+}
+async function setupHomeArt(counties) {
+  const img=$("home-image"),placeholder=$("art-placeholder");
+  img.addEventListener("load",()=>{img.hidden=false;placeholder.hidden=true;});
+  img.addEventListener("error",()=>{img.hidden=true;placeholder.hidden=false;});
+  // Users may place their own Taiwan cover in public/assets/home.webp.
+  // Optional assets/hotspots.json maps county name -> { x:0-100,y:0-100 }.
+  try {
+    const res=await fetch("/assets/hotspots.json");
+    if(!res.ok)return;
+    const map=await res.json();
+    const holder=$("home-image-hotspots");
+    for(const [county,pos] of Object.entries(map)) {
+      if(!counties.some(x=>x.name===county))continue;
+      const x=Number(pos.x),y=Number(pos.y);
+      if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>100||y<0||y>100)continue;
+      const chip=node("button","hotspot",county);
+      chip.type="button";
+      chip.style.left=x+"%"; chip.style.top=y+"%";
+      chip.addEventListener("click",()=>showCounty(county));
+      holder.append(chip);
+    }
+    if(holder.children.length)holder.hidden=false;
+  }catch{}
+}
+async function init() {
+  $("brand").addEventListener("click",showHome);
+  $("back").addEventListener("click",showHome);
+  $("town").addEventListener("change",e=>{state.town=e.target.value;scheduleSearch();});
+  try {
+    const response=await fetch("/data/taiwan-districts.json");
+    if(!response.ok)throw new Error("County list missing");
+    const data=await response.json();
+    state.counties=ORDER.map(name=>data.find(row=>row.name===name)).filter(Boolean);
+    const grid=$("county-list");
+    grid.replaceChildren(...state.counties.map(row=>{
+      const el=node("button","county-button",row.name);
+      el.type="button";
+      el.addEventListener("click",()=>showCounty(row.name));
+      return el;
+    }));
+    await setupHomeArt(state.counties);
+    try {
+      const selected=decodeURIComponent(location.hash.slice(1));
+      if(state.counties.some(x=>x.name===selected))showCounty(selected);
+    }catch{}
+  } catch {
+    $("county-list").textContent="縣市資料暫時無法載入";
+  }
+}
+init();
