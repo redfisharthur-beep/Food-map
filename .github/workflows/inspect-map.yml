@@ -1,0 +1,26 @@
+name: Inspect homepage map
+on:
+  push:
+    paths: [".github/workflows/inspect-map.yml"]
+  workflow_dispatch:
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Encode low-resolution map preview
+        run: |
+          python - <<'PY'
+          import base64, io
+          from PIL import Image
+          im=Image.open('public/assets/map.webp')
+          print('ORIGINAL_MAP_DIMENSIONS',im.size,flush=True)
+          im.thumbnail((850,1550))
+          out=io.BytesIO()
+          im.convert('RGB').save(out,format='JPEG',quality=77,optimize=True)
+          value=base64.b64encode(out.getvalue()).decode('ascii')
+          print('IMAGE_BASE64_START',flush=True)
+          for i in range(0,len(value),700):
+            print('MAP_PART_'+value[i:i+700],flush=True)
+          print('IMAGE_BASE64_END',flush=True)
+          PY
