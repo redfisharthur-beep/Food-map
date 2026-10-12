@@ -1,7 +1,7 @@
+import { CUISINE_QUERIES } from "../public/cuisine-categories.js";
 const GOOGLE_URL = "https://places.googleapis.com/v1/places:searchText";
 const LANG_URL = "https://api.langsearch.com/v1/web-search";
 const MASK = "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.googleMapsUri,places.priceLevel,places.priceRange,places.types,places.primaryType,places.businessStatus,places.photos";
-const CUISINES = {"不限":"","中式":"中式料理","西式":"西式餐廳","日式":"日式料理","韓式":"韓式料理","泰式":"泰式料理","義式":"義大利料理","燒烤":"燒烤","排餐":"牛排","火鍋":"火鍋","小吃":"小吃","素食":"素食","海鮮":"海鮮","咖啡":"咖啡廳","甜點":"甜點"};
 const MEALS = {"不限":"餐廳","早餐":"早餐","午餐":"午餐","晚餐":"晚餐","消夜":"宵夜","點心":"下午茶 點心"};
 const POSITIVE = ["好吃","美味","推薦","值得","回訪","新鮮","划算","親切","必吃","用心"];
 const NEGATIVE = ["難吃","踩雷","失望","態度差","不新鮮","衛生差","冷掉","久等","雷店","價高","油膩","不好吃"];
@@ -116,8 +116,8 @@ async function search(request,env) {
   const u=new URL(request.url), county=trim(u.searchParams.get("county"),12).trim();
   const town=trim(u.searchParams.get("town")||"全區",12).trim();
   const price=u.searchParams.get("price")||"all",meal=u.searchParams.get("meal")||"不限",cuisine=u.searchParams.get("cuisine")||"不限";
-  if(!/^[\u3400-\u9fff]{2,5}[縣市]$/.test(county)||!["all","low","mid","high"].includes(price)||!Object.hasOwn(MEALS,meal)||!Object.hasOwn(CUISINES,cuisine)||town.length>9||/[<>{}"'\\]/.test(town))return send({error:"篩選條件不正確"},400);
-  const textQuery=[county,town==="全區"?"":town,CUISINES[cuisine],MEALS[meal]].filter(Boolean).join(" ");
+  if(!/^[\u3400-\u9fff]{2,5}[縣市]$/.test(county)||!["all","low","mid","high"].includes(price)||!Object.hasOwn(MEALS,meal)||!Object.hasOwn(CUISINE_QUERIES,cuisine)||town.length>9||/[<>{}"'\\]/.test(town))return send({error:"篩選條件不正確"},400);
+  const textQuery=[county,town==="全區"?"":town,CUISINE_QUERIES[cuisine],MEALS[meal]].filter(Boolean).join(" ");
   let places;
   try {
     const res=await fetch(GOOGLE_URL,{
