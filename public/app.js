@@ -1,7 +1,7 @@
 import { makeRegions, countyAt, mapPoint } from "/map-geometry.js";
+import { CUISINE_LABELS } from "/cuisine-categories.js";
 const $ = (id) => document.getElementById(id);
 const MEALS = ["不限","早餐","午餐","晚餐","消夜","點心"];
-const CUISINES = ["不限","中式","西式","日式","韓式","泰式","義式","燒烤","排餐","火鍋","小吃","素食","海鮮","咖啡","甜點"];
 const ORDER = ["台北市","新北市","基隆市","桃園市","新竹市","新竹縣","苗栗縣","台中市","彰化縣","南投縣","雲林縣","嘉義市","嘉義縣","台南市","高雄市","屏東縣","宜蘭縣","花蓮縣","台東縣","澎湖縣","金門縣","連江縣"];
 const state = { county:"",town:"全區",price:"all",meal:"不限",cuisine:"不限",counties:[],timer:null,controller:null,lastKey:"" };
 
@@ -69,7 +69,7 @@ function renderFilters() {
     state.price=val;renderFilters();scheduleSearch();
   })));
   choices("meals",MEALS,state.meal,val=>{state.meal=val;renderFilters();scheduleSearch();});
-  choices("cuisines",CUISINES,state.cuisine,val=>{state.cuisine=val;renderFilters();scheduleSearch();});
+  choices("cuisines",CUISINE_LABELS,state.cuisine,val=>{state.cuisine=val;renderFilters();scheduleSearch();});
 }
 function skeleton() {
   const card=node("div","restaurant-card skeleton");
