@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import worker from "../src/index.js";
+import { CUISINE_LABELS, CUISINE_QUERIES } from "../public/cuisine-categories.js";
 
 test("Taiwan county and township selectors are complete", async () => {
   const counties = JSON.parse(await readFile(new URL("../public/data/taiwan-districts.json", import.meta.url), "utf8"));
@@ -51,5 +52,47 @@ test("Search applies county, town and price filters and returns a 1-99 score", a
     assert(Array.from(data.restaurants[0].feature).length <= 50);
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+
+test("Cuisine filter shows five grouped choices plus unrestricted", async () => {
+  assert.equal(CUISINE_LABELS.length, 6);
+  assert.deepEqual(CUISINE_LABELS, [
+    "不限", "中式／小吃", "日韓／亞洲", "西式／排餐",
+    "鍋物／燒烤", "咖啡／甜點"
+  ]);
+  assert.equal(Object.keys(CUISINE_QUERIES).length, CUISINE_LABELS.length);
+  const app=await readFile(new URL("../public/app.js",import.meta.url),"utf8");
+  assert.match(app,/choices\("cuisines",CUISINE_LABELS/);
+});
+
+test("Each grouped cuisine uses its own query in one Google Places call", async () => {
+  const originalFetch=globalThis.fetch;
+  const captured=[];
+  globalThis.fetch=async (url,init) => {
+    assert.match(String(url),/places:searchText/);
+    captured.push(JSON.parse(init.body).textQuery);
+    return new Response(JSON.stringify({places:[]}),{
+      status:200,headers:{"Content-Type":"application/json"}
+    });
+  };
+  try {
+    for(const label of CUISINE_LABELS) {
+      const url=new URL("https://test.local/api/search");
+      url.search=new URLSearchParams({county:"台中市",meal:"不限",cuisine:label}).toString();
+      const response=await worker.fetch(new Request(url),{GOOGLE_PLACES_API_KEY:"test",AI:null});
+      assert.equal(response.status,200,label);
+    }
+    assert.equal(captured.length,CUISINE_LABELS.length);
+    for(const [i,label] of CUISINE_LABELS.entries()){
+      assert(captured[i].includes("台中市"),label);
+      if(label!=="不限")assert(captured[i].includes(CUISINE_QUERIES[label]),label);
+    }
+    const legacy=await worker.fetch(new Request("https://test.local/api/search?county=台中市&cuisine=日式"),{GOOGLE_PLACES_API_KEY:"test"});
+    assert.equal(legacy.status,400,"legacy individual cuisine should not remain as a visible filter");
+    assert.equal(captured.length,CUISINE_LABELS.length,"invalid category must not call Places");
+  }finally{
+    globalThis.fetch=originalFetch;
   }
 });
