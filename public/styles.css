@@ -151,3 +151,60 @@ a { color:inherit; }
   stroke-width:2.5;
 }
 #home-view .county-hit:active { fill:rgba(255,255,255,.25); }
+
+
+/* Desktop homepage: keep the entire supplied artwork and its SVG at the same scale. */
+@media (min-width:761px) {
+  #home-view {
+    min-height:100svh;
+    display:grid;
+    place-items:center;
+    position:relative;
+    isolation:isolate;
+    overflow:hidden;
+    background:#237d9b;
+  }
+  /* Fill the side margins without stretching/cropping the clickable foreground. */
+  #home-view::before {
+    content:"";
+    position:absolute;
+    inset:-40px;
+    background:url("/assets/map.webp") center / cover no-repeat;
+    filter:blur(27px) brightness(.76);
+    opacity:.65;
+    pointer-events:none;
+    z-index:-1;
+  }
+  #home-view .home-art,
+  #home-view .home-art.image-ready {
+    display:block;
+    width:fit-content;
+    max-width:calc(100vw - 32px);
+    margin:0 auto;
+  }
+  #home-view .home-art img {
+    width:auto;
+    height:auto;
+    max-width:calc(100vw - 32px);
+    max-height:calc(100svh - 24px);
+    object-fit:contain;
+  }
+}
+@media (max-width:760px) {
+  #home-view .home-art,
+  #home-view .home-art.image-ready { width:100%; }
+  #home-view .home-art img {
+    width:100%;
+    max-width:100%;
+    max-height:none;
+    height:auto;
+    object-fit:contain;
+  }
+}
+/* Polygons are approximate click targets, not the source image's precise ink borders. */
+#home-view .hotspots { pointer-events:auto; }
+#home-view .county-hit:hover,
+#home-view .county-hit:focus-visible {
+  fill:rgba(255,255,255,.09);
+  stroke:transparent;
+}
