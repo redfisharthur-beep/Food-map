@@ -163,6 +163,50 @@ async function searchRestaurants() {
     if(state.controller===controller)state.controller=null;
   }
 }
+// The source artwork is illustrative. Resolve overlap by choosing the most specific
+// hit area, and tolerate small hand-drawn gaps without exposing inaccurate outlines.
+function withinPolygon(x,y,points) {
+  let inside=false;
+  for(let i=0,j=points.length-1;i<points.length;j=i++) {
+    const a=points[i],b=points[j];
+    if(((a[1]>y)!==(b[1]>y)) &&
+       x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])inside=!inside;
+  }
+  return inside;
+}
+function polygonArea(points) {
+  let sum=0;
+  for(let i=0;i<points.length;i++) {
+    const a=points[i],b=points[(i+1)%points.length];
+    sum+=a[0]*b[1]-b[0]*a[1];
+  }
+  return Math.abs(sum)/2;
+}
+function distanceToBoundary(x,y,points) {
+  let closest=Infinity;
+  for(let i=0;i<points.length;i++) {
+    const a=points[i],b=points[(i+1)%points.length];
+    const dx=b[0]-a[0],dy=b[1]-a[1];
+    const t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy||1)));
+    const d=Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy);
+    closest=Math.min(closest,d);
+  }
+  return closest;
+}
+function countyAt(x,y,regions) {
+  // Cities embedded inside larger counties must take precedence.
+  const inside=regions.filter(region=>withinPolygon(x,y,region.points));
+  if(inside.length) {
+    return inside.reduce((best,region)=>region.area<best.area?region:best).county;
+  }
+  // Small seams in the hand-traced art remain clickable (12 preview-image pixels).
+  let nearest=null,shortest=12;
+  for(const region of regions) {
+    const dist=distanceToBoundary(x,y,region.points);
+    if(dist<shortest){shortest=dist;nearest=region;}
+  }
+  return nearest?.county||"";
+}
 async function setupHomeArt(counties) {
   const img=$("home-image");
   const svg=$("home-image-hotspots");
@@ -171,12 +215,20 @@ async function setupHomeArt(counties) {
   const response=await fetch("/assets/map-areas.json");
   if(!response.ok)throw new Error("Map polygons not found");
   const data=await response.json();
+  if(!Array.isArray(data.viewBox)||data.viewBox.length!==4)throw new Error("Map viewBox missing");
   svg.setAttribute("viewBox",data.viewBox.join(" "));
+  // Match the original painted image in both axes, even if its ratio differs.
+  // The foreground image and SVG share the same positioned container.
   svg.setAttribute("preserveAspectRatio","none");
+  svg.replaceChildren();
+  const regions=[];
   for(const [county,polygons] of Object.entries(data.areas)) {
     if(!available.has(county))continue;
     for(const polygon of polygons) {
       if(!Array.isArray(polygon)||polygon.length<3)continue;
+      const area=polygonArea(polygon);
+      if(area<1)continue;
+      regions.push({county,points:polygon,area});
       const hit=document.createElementNS(svgNS,"polygon");
       hit.setAttribute("points",polygon.map(point=>point.join(",")).join(" "));
       hit.setAttribute("class","county-hit");
@@ -187,14 +239,23 @@ async function setupHomeArt(counties) {
       const title=document.createElementNS(svgNS,"title");
       title.textContent=county;
       hit.append(title);
-      const choose=()=>showCounty(county);
-      hit.addEventListener("click",choose);
       hit.addEventListener("keydown",event=>{
-        if(event.key==="Enter"||event.key===" "){event.preventDefault();choose();}
+        if(event.key==="Enter"||event.key===" "){
+          event.preventDefault();
+          showCounty(county);
+        }
       });
       svg.append(hit);
     }
   }
+  svg.addEventListener("click",event=>{
+    const rect=svg.getBoundingClientRect();
+    if(!rect.width||!rect.height)return;
+    const x=data.viewBox[0]+(event.clientX-rect.left)/rect.width*data.viewBox[2];
+    const y=data.viewBox[1]+(event.clientY-rect.top)/rect.height*data.viewBox[3];
+    const county=countyAt(x,y,regions);
+    if(county)showCounty(county);
+  });
   img.addEventListener("dragstart",event=>event.preventDefault());
 }
 async function init() {
